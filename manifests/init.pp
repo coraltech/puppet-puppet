@@ -10,7 +10,12 @@
 #
 # Parameters:
 #
-#   $module_paths = [ ]
+#   $module_paths       = $puppet::params::module_paths,
+#   $base_module_paths  = $puppet::params::base_module_paths,
+#   $puppet_init_config = $puppet::params::puppet_init_config,
+#   $puppet_config      = $puppet::params::puppet_config,
+#   $puppet_version     = $puppet::params::puppet_version,
+#   $vim_puppet_version = $puppet::params::vim_puppet_version
 #
 # Actions:
 #
@@ -25,12 +30,21 @@
 #   }
 #
 # [Remember: No empty lines between comments and class definition]
-class puppet ( $module_paths = [ ] ) {
+class puppet (
 
-  include puppet::params
+  $module_paths       = $puppet::params::module_paths,
+  $base_module_paths  = $puppet::params::base_module_paths,
+  $puppet_init_config = $puppet::params::puppet_init_config,
+  $puppet_config      = $puppet::params::puppet_config,
+  $puppet_version     = $puppet::params::puppet_version,
+  $vim_puppet_version = $puppet::params::vim_puppet_version
 
-  if $puppet::params::base_module_paths {
-    $all_module_paths = [ $puppet::params::base_module_paths, $module_paths ]
+) inherits puppet::params {
+
+  #-----------------------------------------------------------------------------
+
+  if $base_module_paths {
+    $all_module_paths = [ $base_module_paths, $module_paths ]
   }
   elsif $module_paths {
     $all_module_paths = $module_paths
@@ -42,16 +56,16 @@ class puppet ( $module_paths = [ ] ) {
   #-----------------------------------------------------------------------------
   # Install
 
-  if ! $puppet::params::puppet_version {
+  if ! $puppet_version {
     fail('Puppet version must be defined')
   }
   package { 'puppet':
-    ensure => $puppet::params::puppet_version,
+    ensure => $puppet_version,
   }
 
-  if $puppet::params::vim_puppet_version {
+  if $vim_puppet_version {
     package { 'vim-puppet':
-      ensure => $puppet::params::vim_puppet_version,
+      ensure => $vim_puppet_version,
     }
   }
 
@@ -66,8 +80,8 @@ class puppet ( $module_paths = [ ] ) {
   #-----------------------------------------------------------------------------
   # Configure
 
-  if $puppet::params::puppet_init_config {
-    file { $puppet::params::puppet_init_config:
+  if $puppet_init_config {
+    file { $puppet_init_config:
       owner    => 'root',
       group    => 'root',
       mode     => 644,
@@ -76,8 +90,8 @@ class puppet ( $module_paths = [ ] ) {
     }
   }
 
-  if $puppet::params::puppet_config {
-    file { $puppet::params::puppet_config:
+  if $puppet_config {
+    file { $puppet_config:
       owner   => 'root',
       group   => 'root',
       mode    => 644,
@@ -92,6 +106,6 @@ class puppet ( $module_paths = [ ] ) {
   service { 'puppet':
     enable    => true,
     ensure    => running,
-    subscribe => Package['puppet'],
+    require   => File[$puppet_config],
   }
 }

@@ -3,6 +3,8 @@ class puppet::params {
 
   #-----------------------------------------------------------------------------
 
+  $module_paths       = [ ]
+
   $puppet_init_config = '/etc/default/puppet'
   $puppet_config      = '/etc/puppet/puppet.conf'
 
