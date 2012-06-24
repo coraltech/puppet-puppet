@@ -9,5 +9,4 @@
 <% end -%>
 <% hiera_backends.each_pair do |name, data_dir| -%>
 :<%= name -%>:
-    :datadir: '<%= data_dir %>
-<% end -%>
+    :datadir: '<%= data_dir %>'
