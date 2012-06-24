@@ -3,12 +3,17 @@ class puppet::params {
 
   #-----------------------------------------------------------------------------
 
-  $module_paths       = [ ]
-
   $puppet_init_config = '/etc/default/puppet'
   $puppet_config      = '/etc/puppet/puppet.conf'
 
+  $hiera_config       = '/etc/hiera.yaml'
+
   $base_module_paths  = [ '/etc/puppet/modules' ]
+
+  $hiera_hierarchy    = [ '%{environment}', 'common' ]
+  $hiera_backends     = {
+    'yaml' => '/var/lib/hiera',
+  }
 
   case $::operatingsystem {
     debian: {}

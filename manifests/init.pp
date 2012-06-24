@@ -32,10 +32,9 @@
 # [Remember: No empty lines between comments and class definition]
 class puppet (
 
-  $module_paths       = $puppet::params::module_paths,
-  $base_module_paths  = $puppet::params::base_module_paths,
-  $puppet_init_config = $puppet::params::puppet_init_config,
-  $puppet_config      = $puppet::params::puppet_config,
+  $module_paths       = [ ],
+  $hiera_hierarchy    = $puppet::params::hiera_hierarchy,
+  $hiera_backends     = $puppet::params::hiera_backends,
   $puppet_version     = $puppet::params::puppet_version,
   $vim_puppet_version = $puppet::params::vim_puppet_version
 
@@ -43,8 +42,8 @@ class puppet (
 
   #-----------------------------------------------------------------------------
 
-  if $base_module_paths {
-    $all_module_paths = [ $base_module_paths, $module_paths ]
+  if $puppet::params::base_module_paths {
+    $all_module_paths = [ $puppet::params::base_module_paths, $module_paths ]
   }
   elsif $module_paths {
     $all_module_paths = $module_paths
@@ -71,7 +70,7 @@ class puppet (
 
   #---
 
-  package { 'puppet-module':
+  package { [ 'puppet-module', 'hiera', 'hiera-puppet', 'hiera-json' ]:
     ensure    => 'present',
     provider  => 'gem',
     subscribe => Package['puppet'],
@@ -80,23 +79,36 @@ class puppet (
   #-----------------------------------------------------------------------------
   # Configure
 
-  if $puppet_init_config {
-    file { $puppet_init_config:
-      owner    => 'root',
-      group    => 'root',
-      mode     => 644,
+  if $puppet::params::puppet_init_config {
+    file { $puppet::params::puppet_init_config:
+      owner   => 'root',
+      group   => 'root',
+      mode    => 644,
       source  => 'puppet:///modules/puppet/puppet_init.conf',
       require => Package['puppet'],
+      notify  => Service['puppet'],
     }
   }
 
-  if $puppet_config {
-    file { $puppet_config:
+  if $puppet::params::puppet_config {
+    file { $puppet::params::puppet_config:
       owner   => 'root',
       group   => 'root',
       mode    => 644,
       content => template('puppet/puppet.conf.erb'),
       require => Package['puppet'],
+      notify  => Service['puppet'],
+    }
+  }
+
+  if $puppet::params::hiera_config {
+    file { $puppet::params::hiera_config:
+      owner   => 'root',
+      group   => 'root',
+      mode    => 644,
+      content => template('puppet/hiera.yaml.erb'),
+      require => Package['hiera'],
+      notify  => Service['puppet'],
     }
   }
 
@@ -104,8 +116,8 @@ class puppet (
   # Manage
 
   service { 'puppet':
-    enable    => true,
-    ensure    => running,
-    require   => File[$puppet_config],
+    enable  => true,
+    ensure  => running,
+    require => File[$puppet::params::puppet_config],
   }
 }

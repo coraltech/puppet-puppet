@@ -1,0 +1,13 @@
+---
+:hierarchy:
+<% hiera_hierarchy.each do |level| -%>
+    - <%= level %>
+<% end -%>
+:backends:
+<% hiera_backends.each_pair do |name, data_dir| -%>
+    - <%= name %>
+<% end -%>
+<% hiera_backends.each_pair do |name, data_dir| -%>
+:<%= name -%>:
+    :datadir: '<%= data_dir %>
+<% end -%>
