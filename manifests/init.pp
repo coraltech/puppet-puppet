@@ -10,10 +10,9 @@
 #
 # Parameters:
 #
-#   $module_paths       = $puppet::params::module_paths,
-#   $base_module_paths  = $puppet::params::base_module_paths,
-#   $puppet_init_config = $puppet::params::puppet_init_config,
-#   $puppet_config      = $puppet::params::puppet_config,
+#   $module_paths       = [ ],
+#   $hiera_hierarchy    = $puppet::params::hiera_hierarchy,
+#   $hiera_backends     = $puppet::params::hiera_backends,
 #   $puppet_version     = $puppet::params::puppet_version,
 #   $vim_puppet_version = $puppet::params::vim_puppet_version
 #
