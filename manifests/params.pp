@@ -10,7 +10,7 @@ class puppet::params {
 
   $base_module_paths  = [ '/etc/puppet/modules' ]
 
-  $hiera_hierarchy    = [ '%{environment}', 'common' ]
+  $hiera_hierarchy    = [ '%{environment}', '%{hostname}', 'common' ]
   $hiera_backends     = {
     'json'   => '/var/lib/hiera',
     'puppet' => 'data',
