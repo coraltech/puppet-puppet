@@ -2,12 +2,17 @@
 :hierarchy:
 <% hiera_hierarchy.each do |level| -%>
     - <%= level %>
-<% end -%>
+<% end %>
 :backends:
-<% hiera_backends.each_pair do |name, data_dir| -%>
+<% hiera_backends.each_pair do |name, data| -%>
     - <%= name %>
-<% end -%>
-<% hiera_backends.each_pair do |name, data_dir| -%>
+<% end %>
+<% hiera_backends.each_pair do |name, data| -%>
 :<%= name -%>:
-    :datadir: '<%= data_dir -%>'
+<% if name == 'puppet' -%>
+    :datasource: '<%= data -%>'
+<% else -%>
+    :datadir: '<%= data -%>'
+
+<% end -%>
 <% end -%>
