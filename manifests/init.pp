@@ -10,11 +10,17 @@
 #
 # Parameters:
 #
-#   $module_paths       = [ ],
+#   $manifest_path      = $puppet::params::manifest_path,
+#   $manifest_file      = $puppet::params::manifest_file,
+#   $module_paths       = [],
+#   $template_path      = $puppet::params::template_path,
+#   $update_interval    = $puppet::params::update_interval,
+#   $update_environment = $puppet::params::update_environment,
+#   $update_command     = $puppet::params::update_command,
 #   $hiera_hierarchy    = $puppet::params::hiera_hierarchy,
 #   $hiera_backends     = $puppet::params::hiera_backends,
 #   $puppet_version     = $puppet::params::puppet_version,
-#   $vim_puppet_version = $puppet::params::vim_puppet_version
+#   $vim_puppet_version = $puppet::params::vim_puppet_version,
 #
 # Actions:
 #
@@ -31,13 +37,26 @@
 # [Remember: No empty lines between comments and class definition]
 class puppet (
 
-  $module_paths       = [ ],
+  $manifest_path      = $puppet::params::manifest_path,
+  $manifest_file      = $puppet::params::manifest_file,
+  $module_paths       = [],
+  $template_path      = $puppet::params::template_path,
+  $update_interval    = $puppet::params::update_interval,
+  $update_environment = $puppet::params::update_environment,
+  $update_command     = $puppet::params::update_command,
+  $reports            = $puppet::params::reports,
+  $report_path        = $puppet::params::report_path,
+  $report_emails      = $puppet::params::report_emails,
   $hiera_hierarchy    = $puppet::params::hiera_hierarchy,
   $hiera_backends     = $puppet::params::hiera_backends,
   $puppet_version     = $puppet::params::puppet_version,
-  $vim_puppet_version = $puppet::params::vim_puppet_version
+  $vim_puppet_version = $puppet::params::vim_puppet_version,
 
 ) inherits puppet::params {
+
+  $tagmail_config   = $puppet::params::puppet_tagmail_config
+
+  $hiera_puppet_gem = $puppet::params::hiera_puppet_gem
 
   #-----------------------------------------------------------------------------
 
@@ -69,10 +88,33 @@ class puppet (
 
   #---
 
-  package { [ 'puppet-module', 'hiera', 'hiera-puppet', 'hiera-json' ]:
+  package { 'puppet-module':
     ensure    => 'present',
     provider  => 'gem',
-    subscribe => Package['puppet'],
+    subscribe => [ Class['ruby'], Package['puppet'] ],
+  }
+
+  /*package { 'hiera-puppet':
+    ensure    => 'present',
+    provider  => 'gem',
+    subscribe => [ Class['ruby'], Package['hiera'], Package['puppet'] ],
+  }*/
+
+  file { 'hiera-puppet-gem':
+    path      => $hiera_puppet_gem,
+    ensure    => 'present',
+    owner     => 'root',
+    group     => 'root',
+    mode      => 644,
+    source    => 'puppet:///modules/puppet/hiera-puppet-1.0.0rc1.20.gem',
+    subscribe => [ Class['ruby'], Package['hiera'], Package['puppet'] ],
+  }
+
+  exec { 'install-hiera-puppet-gem':
+    path        => [ '/bin', '/usr/bin' ],
+    command     => "gem install --local '${hiera_puppet_gem}'",
+    refreshonly => true,
+    subscribe   => File['hiera-puppet-gem'],
   }
 
   #-----------------------------------------------------------------------------
@@ -100,6 +142,17 @@ class puppet (
     }
   }
 
+  if $tagmail_config {
+    file { $tagmail_config:
+      owner   => 'root',
+      group   => 'root',
+      mode    => 644,
+      content => template('puppet/tagmail.conf.erb'),
+      require => Package['puppet'],
+      notify  => Service['puppet'],
+    }
+  }
+
   if $puppet::params::hiera_config {
     file { $puppet::params::hiera_config:
       owner   => 'root',
@@ -111,12 +164,38 @@ class puppet (
     }
   }
 
+  if $puppet::params::hiera_puppet_config {
+    file { $puppet::params::hiera_puppet_config:
+      owner   => 'root',
+      group   => 'root',
+      mode    => 644,
+      content => template('puppet/hiera.puppet.yaml.erb'),
+      require => Package['hiera'],
+      notify  => Service['puppet'],
+    }
+  }
+
+  file { $report_path:
+    ensure  => 'directory',
+    owner   => 'root',
+    group   => 'root',
+    mode    => '755',
+    require => Package['puppet'],
+  }
+
   #-----------------------------------------------------------------------------
   # Manage
 
+  # No puppet agent!  We self manage with "puppet apply".
   service { 'puppet':
-    enable  => true,
-    ensure  => running,
-    require => File[$puppet::params::puppet_config],
+    ensure  => 'stopped',
+  }
+
+  cron { 'puppet-cron':
+    ensure      => 'present',
+    environment => $update_environment,
+    command     => $update_command,
+    user        => 'root',
+    minute      => "*/${update_interval}",
   }
 }

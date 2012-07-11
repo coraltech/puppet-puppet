@@ -5,17 +5,13 @@
 <% end %>
 :backends:
 <% hiera_backends.each do |backend| -%>
-<% if backend['type'] != 'puppet' -%>
     - <%= backend['type'] %>
-<% end -%>
 <% end %>
 <% hiera_backends.each do |backend| -%>
-<% if backend['type'] != 'puppet' -%>
 :<%= backend['type'] -%>:
 <% if backend['datasource'] -%>
     :datasource: '<%= backend['datasource'] -%>'
 <% else -%>
     :datadir: '<%= backend['datadir'] -%>'
 <% end %>
-<% end -%>
 <% end -%>

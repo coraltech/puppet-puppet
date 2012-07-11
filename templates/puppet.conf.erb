@@ -4,16 +4,13 @@ vardir=/var/lib/puppet
 ssldir=/var/lib/puppet/ssl
 rundir=/var/run/puppet
 factpath=$vardir/lib/facter
-templatedir=$confdir/templates
+templatedir=<%= template_path %>
+manifestdir=<%= manifest_path %>
+manifest=$manifestdir/<%= manifest_file %>
 prerun_command=/etc/puppet/etckeeper-commit-pre
 postrun_command=/etc/puppet/etckeeper-commit-post
 modulepath=<%= all_module_paths.flatten.join(':') %>
-
-[master]
-# These are needed when the puppetmaster is run by passenger
-# and can safely be removed if webrick is used.
-ssl_client_header = SSL_CLIENT_S_DN
-ssl_client_verify_header = SSL_CLIENT_VERIFY
-
-[agent]
-pluginsync = true
+report=true
+reportdir=<%= report_path %>
+reports=<%= reports %>
+tagmap=<%= tagmail_config %>
