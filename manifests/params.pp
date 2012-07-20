@@ -1,6 +1,8 @@
 
 class puppet::params {
 
+  include puppet::default
+
   #-----------------------------------------------------------------------------
   # General configurations
 
