@@ -2,25 +2,13 @@
 #
 #   This module manages the Puppet service.
 #
-#   Adrian Webb <adrian.webb@coraltg.com>
+#   Adrian Webb <adrian.webb@coraltech.net>
 #   2012-05-22
 #
 #   Tested platforms:
 #    - Ubuntu 12.04
 #
-# Parameters:
-#
-#   $manifest_path      = $puppet::params::manifest_path,
-#   $manifest_file      = $puppet::params::manifest_file,
-#   $module_paths       = [],
-#   $template_path      = $puppet::params::template_path,
-#   $update_interval    = $puppet::params::update_interval,
-#   $update_environment = $puppet::params::update_environment,
-#   $update_command     = $puppet::params::update_command,
-#   $hiera_hierarchy    = $puppet::params::hiera_hierarchy,
-#   $hiera_backends     = $puppet::params::hiera_backends,
-#   $puppet_version     = $puppet::params::puppet_version,
-#   $vim_puppet_version = $puppet::params::vim_puppet_version,
+# Parameters: (see example/params.json> for Hiera configurations)
 #
 # Actions:
 #
@@ -37,106 +25,81 @@
 # [Remember: No empty lines between comments and class definition]
 class puppet (
 
-  $manifest_path      = $puppet::params::manifest_path,
-  $manifest_file      = $puppet::params::manifest_file,
-  $module_paths       = [],
-  $template_path      = $puppet::params::template_path,
-  $update_interval    = $puppet::params::update_interval,
-  $update_environment = $puppet::params::update_environment,
-  $update_command     = $puppet::params::update_command,
-  $reports            = $puppet::params::reports,
-  $report_path        = $puppet::params::report_path,
-  $report_emails      = $puppet::params::report_emails,
-  $hiera_hierarchy    = $puppet::params::hiera_hierarchy,
-  $hiera_backends     = $puppet::params::hiera_backends,
-  $puppet_version     = $puppet::params::puppet_version,
-  $vim_puppet_version = $puppet::params::vim_puppet_version,
+  $package                 = $puppet::params::os_puppet_package,
+  $package_ensure          = $puppet::params::puppet_package_ensure,
+  $service                 = $puppet::params::os_puppet_service,
+  $service_ensure          = $puppet::params::puppet_service_ensure,
+  $vim_puppet_package      = $puppet::params::os_vim_puppet_package,
+  $vim_puppet_ensure       = $puppet::params::vim_puppet_ensure,
+  $puppet_module_package   = $puppet::params::os_puppet_module_package,
+  $puppet_module_ensure    = $puppet::params::puppet_module_ensure,
+  $init_config             = $puppet::params::os_init_config,
+  $config_dir              = $puppet::params::os_config_dir,
+  $config                  = $puppet::params::os_config,
+  $tagmail_config          = $puppet::params::os_tagmail_config,
+  $template_dir            = $puppet::params::os_template_dir,
+  $manifest_dir            = $puppet::params::os_manifest_dir,
+  $manifest_file           = $puppet::params::manifest_file,
+  $module_dirs             = $puppet::params::os_module_dirs,
+  $report_dir              = $puppet::params::os_report_dir,
+  $reports                 = $puppet::params::reports,
+  $report_emails           = $puppet::params::report_emails,
+  $update_environment      = $puppet::params::os_update_environment,
+  $update_command          = $puppet::params::os_update_command,
+  $update_interval         = $puppet::params::update_interval,
+  $init_config_template    = $puppet::params::os_init_config_template,
+  $config_template         = $puppet::params::os_config_template,
+  $tagmail_config_template = $puppet::params::os_tagmail_config_template,
 
 ) inherits puppet::params {
-
-  $tagmail_config   = $puppet::params::puppet_tagmail_config
-
-  $hiera_puppet_gem = $puppet::params::hiera_puppet_gem
-
-  #-----------------------------------------------------------------------------
-
-  if $puppet::params::base_module_paths {
-    $all_module_paths = [ $puppet::params::base_module_paths, $module_paths ]
-  }
-  elsif $module_paths {
-    $all_module_paths = $module_paths
-  }
-  else {
-    fail('module paths must be defined')
-  }
 
   #-----------------------------------------------------------------------------
   # Install
 
-  if ! $puppet_version {
-    fail('Puppet version must be defined')
-  }
-  package { 'puppet':
-    ensure => $puppet_version,
+  if empty($module_dirs) {
+    fail('Puppet module paths must be defined')
   }
 
-  if $vim_puppet_version {
+  if ! ($package and $package_ensure) {
+    fail('Puppet package name and ensure value must be defined')
+  }
+  package { 'puppet':
+    name   => $package,
+    ensure => $package_ensure,
+  }
+
+  if $vim_puppet_package and $vim_puppet_ensure {
     package { 'vim-puppet':
-      ensure => $vim_puppet_version,
+      name   => $vim_puppet_package,
+      ensure => $vim_puppet_ensure,
     }
   }
 
   #---
 
-  package { 'puppet-module':
-    ensure    => 'present',
-    provider  => 'gem',
-    subscribe => [ Class['ruby'], Package['puppet'] ],
-  }
-
-  /*package { 'hiera-puppet':
-    ensure    => 'present',
-    provider  => 'gem',
-    subscribe => [ Class['ruby'], Package['hiera'], Package['puppet'] ],
-  }*/
-
-  file { 'hiera-puppet-gem':
-    path      => $hiera_puppet_gem,
-    ensure    => 'present',
-    owner     => 'root',
-    group     => 'root',
-    mode      => 644,
-    source    => 'puppet:///modules/puppet/hiera-puppet-1.0.0rc1.20.gem',
-    subscribe => [ Class['ruby'], Package['hiera'], Package['puppet'] ],
-  }
-
-  exec { 'install-hiera-puppet-gem':
-    path        => [ '/bin', '/usr/bin' ],
-    command     => "gem install --local '${hiera_puppet_gem}'",
-    refreshonly => true,
-    subscribe   => File['hiera-puppet-gem'],
+  if $puppet_module_package and $puppet_module_ensure {
+    package { 'puppet-module':
+      name     => $puppet_module_package,
+      ensure   => $puppet_module_ensure,
+      provider => 'gem',
+      require  => Package['puppet'],
+    }
   }
 
   #-----------------------------------------------------------------------------
   # Configure
 
-  if $puppet::params::puppet_init_config {
-    file { $puppet::params::puppet_init_config:
-      owner   => 'root',
-      group   => 'root',
-      mode    => 644,
-      source  => 'puppet:///modules/puppet/puppet_init.conf',
+  if $init_config {
+    file { $init_config:
+      content => template($init_config_template),
       require => Package['puppet'],
       notify  => Service['puppet'],
     }
   }
 
-  if $puppet::params::puppet_config {
-    file { $puppet::params::puppet_config:
-      owner   => 'root',
-      group   => 'root',
-      mode    => 644,
-      content => template('puppet/puppet.conf.erb'),
+  if $config {
+    file { $config:
+      content => template($config_template),
       require => Package['puppet'],
       notify  => Service['puppet'],
     }
@@ -144,58 +107,35 @@ class puppet (
 
   if $tagmail_config {
     file { $tagmail_config:
-      owner   => 'root',
-      group   => 'root',
-      mode    => 644,
-      content => template('puppet/tagmail.conf.erb'),
+      content => template($tagmail_config_template),
       require => Package['puppet'],
       notify  => Service['puppet'],
     }
   }
 
-  if $puppet::params::hiera_config {
-    file { $puppet::params::hiera_config:
-      owner   => 'root',
-      group   => 'root',
-      mode    => 644,
-      content => template('puppet/hiera.yaml.erb'),
-      require => Package['hiera'],
-      notify  => Service['puppet'],
-    }
-  }
-
-  if $puppet::params::hiera_puppet_config {
-    file { $puppet::params::hiera_puppet_config:
-      owner   => 'root',
-      group   => 'root',
-      mode    => 644,
-      content => template('puppet/hiera.puppet.yaml.erb'),
-      require => Package['hiera'],
-      notify  => Service['puppet'],
-    }
-  }
-
-  file { $report_path:
-    ensure  => 'directory',
-    owner   => 'root',
-    group   => 'root',
-    mode    => '755',
+  file { $report_dir:
+    ensure  => directory,
     require => Package['puppet'],
   }
 
   #-----------------------------------------------------------------------------
   # Manage
 
-  # No puppet agent!  We self manage with "puppet apply".
   service { 'puppet':
-    ensure  => 'stopped',
+    name   => $service,
+    ensure => $service_ensure,
   }
 
-  cron { 'puppet-cron':
-    ensure      => 'present',
-    environment => $update_environment,
-    command     => $update_command,
-    user        => 'root',
-    minute      => "*/${update_interval}",
+  if $service_ensure == 'absent' {
+    cron { 'puppet-cron':
+      ensure => $update_command ? {
+        ''      => 'absent',
+        default => 'present',
+      },
+      environment => $update_environment,
+      command     => $update_command,
+      user        => 'root',
+      minute      => "*/${update_interval}",
+    }
   }
 }

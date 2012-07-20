@@ -2,57 +2,59 @@
 class puppet::params {
 
   #-----------------------------------------------------------------------------
+  # General configurations
 
-  $puppet_init_config    = '/etc/default/puppet'
-
-  $puppet_path           = '/etc/puppet'
-  $puppet_config         = "${puppet_path}/puppet.conf"
-  $puppet_tagmail_config = "${puppet_path}/tagmail.conf"
-
-  $hiera_config          = "/etc/hiera.yaml"
-  $hiera_puppet_config   = "${puppet_path}/hiera.yaml"
-
-  $template_path         = "${puppet_path}/templates"
-  $manifest_path         = "${puppet_path}/manifests"
-  $manifest_file         = 'site.pp'
-
-  $base_module_paths     = [ "${puppet_path}/modules" ]
-
-  if $::vagrant_exists {
-    $reports = "store"
+  if $::hiera_ready {
+    $puppet_package_ensure = hiera('puppet_package_ensure', $puppet::default::puppet_package_ensure)
+    $puppet_service_ensure = hiera('puppet_service_ensure', $puppet::default::puppet_service_ensure)
+    $vim_puppet_ensure     = hiera('puppet_vim_puppet_ensure', $puppet::default::vim_puppet_ensure)
+    $puppet_module_ensure  = hiera('puppet_vim_puppet_ensure', $puppet::default::puppet_module_ensure)
+    $manifest_file         = hiera('puppet_manifest_file', $puppet::default::manifest_file)
+    $reports               = hiera('puppet_reports', $puppet::default::reports)
+    $report_emails         = hiera('puppet_report_emails', $puppet::default::report_emails)
+    $update_interval       = hiera('puppet_update_interval', $puppet::default::update_interval)
   }
   else {
-    $reports = "log,store"
+    $puppet_package_ensure = $puppet::default::puppet_package_ensure
+    $puppet_service_ensure = $puppet::default::puppet_service_ensure
+    $vim_puppet_ensure     = $puppet::default::vim_puppet_ensure
+    $puppet_module_ensure  = $puppet::default::puppet_module_ensure
+    $manifest_file         = $puppet::default::manifest_file
+    $reports               = $puppet::default::reports
+    $report_emails         = $puppet::default::report_emails
+    $update_interval       = $puppet::default::update_interval
   }
 
-  $report_path           = "/var/log/puppet/reports"
-  $report_emails         = {}
-
-  $update_interval       = 30  # Minutes
-  $update_environment    = 'PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin'
-  $update_command        = "puppet apply '${manifest_path}/${manifest_file}'"
-
-  $hiera_hierarchy       = [ '%{environment}', '%{hostname}', 'common' ]
-  $hiera_backends        = [
-    {
-      'type'    => 'json',
-      'datadir' => '/var/lib/hiera',
-    },
-    {
-      'type'       => 'puppet',
-      'datasource' => 'data',
-    },
-  ]
-
-  $hiera_puppet_gem      = '/tmp/hiera-puppet.gem'
+  #-----------------------------------------------------------------------------
+  # Operating system specific configurations
 
   case $::operatingsystem {
-    debian: {}
-    ubuntu: {
-      $puppet_version     = '2.7.11-1ubuntu2'
-      $vim_puppet_version = '2.7.11-1ubuntu2'
+    debian, ubuntu: {
+      $os_puppet_package          = 'puppet'
+      $os_puppet_service          = 'puppet'
+      $os_vim_puppet_package      = 'vim-puppet'
+      $os_puppet_module_package   = 'puppet-module'
+
+      $os_init_config             = '/etc/default/puppet'
+      $os_init_config_template    = 'puppet/puppet_init.conf.erb'
+      $os_config_dir              = '/etc/puppet'
+      $os_config                  = "${os_config_dir}/puppet.conf"
+      $os_config_template         = 'puppet/puppet.conf.erb'
+      $os_tagmail_config          = "${os_config_dir}/tagmail.conf"
+      $os_tagmail_config_template = 'puppet/tagmail.conf.erb'
+
+      $os_template_dir            = "${os_config_dir}/templates"
+      $os_manifest_dir            = "${os_config_dir}/manifests"
+
+      $os_module_dirs             = [ "${os_config_dir}/modules" ]
+
+      $os_report_dir              = "/var/log/puppet/reports"
+
+      $os_update_environment      = 'PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin'
+      $os_update_command          = "puppet apply '${os_manifest_dir}/${manifest_file}'"
     }
-    centos: {}
-    redhat: {}
+    default: {
+      fail("The puppet module is not currently supported on ${::operatingsystem}")
+    }
   }
 }

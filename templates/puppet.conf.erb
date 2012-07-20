@@ -4,13 +4,13 @@ vardir=/var/lib/puppet
 ssldir=/var/lib/puppet/ssl
 rundir=/var/run/puppet
 factpath=$vardir/lib/facter
-templatedir=<%= template_path %>
-manifestdir=<%= manifest_path %>
+templatedir=<%= template_dir %>
+manifestdir=<%= manifest_dir %>
 manifest=$manifestdir/<%= manifest_file %>
 prerun_command=/etc/puppet/etckeeper-commit-pre
 postrun_command=/etc/puppet/etckeeper-commit-post
-modulepath=<%= all_module_paths.flatten.join(':') %>
+modulepath=<%= module_dirs.flatten.join(':') %>
 report=true
-reportdir=<%= report_path %>
-reports=<%= reports %>
+reportdir=<%= report_dir %>
+reports=<%= reports.flatten.join(',') %>
 tagmap=<%= tagmail_config %>

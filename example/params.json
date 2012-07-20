@@ -1,0 +1,10 @@
+{
+  "puppet_package_ensure" : "present",
+  "puppet_service_ensure" : "stopped",
+  "puppet_vim_puppet_ensure" : "present",
+  "puppet_module_ensure" : "present",
+  "puppet_manifest_file" : "site.pp",
+  "puppet_reports" : [ "log", "store" ],
+  "puppet_report_emails" : {},
+  "puppet_update_interval" : "30"
+}
