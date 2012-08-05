@@ -126,7 +126,7 @@ class puppet (
     ensure => $service_ensure,
   }
 
-  if $service_ensure == 'absent' {
+  if $service_ensure == 'stopped' {
     cron { 'puppet-cron':
       ensure => $update_command ? {
         ''      => 'absent',
