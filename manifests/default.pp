@@ -5,7 +5,7 @@ class puppet::default {
   $vim_puppet_ensure     = 'present'
   $puppet_module_ensure  = 'present'
   $manifest_file         = 'site.pp'
-  $reports               = [ 'log', 'store' ]
+  $reports               = [ 'store' ]
   $report_emails         = {}
   $update_interval       = 30  # Minutes
 }
