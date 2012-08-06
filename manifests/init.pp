@@ -70,8 +70,9 @@ class puppet (
 
   if $vim_puppet_package and $vim_puppet_ensure {
     package { 'vim-puppet':
-      name   => $vim_puppet_package,
-      ensure => $vim_puppet_ensure,
+      name    => $vim_puppet_package,
+      ensure  => $vim_puppet_ensure,
+      require => Package['puppet'],
     }
   }
 
