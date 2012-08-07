@@ -37,6 +37,8 @@ class puppet::params {
       $os_vim_puppet_package      = 'vim-puppet'
       $os_puppet_module_package   = 'puppet-module'
 
+      $os_bin                     = "/usr/bin/puppet"
+
       $os_init_config             = '/etc/default/puppet'
       $os_init_config_template    = 'puppet/puppet_init.conf.erb'
       $os_config_dir              = '/etc/puppet'
@@ -53,7 +55,7 @@ class puppet::params {
       $os_report_dir              = "/var/log/puppet/reports"
 
       $os_update_environment      = 'PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin'
-      $os_update_command          = "puppet apply '${os_manifest_dir}/${manifest_file}'"
+      $os_update_command          = "${os_bin} apply '${os_manifest_dir}/${manifest_file}'"
     }
     default: {
       fail("The puppet module is not currently supported on ${::operatingsystem}")
