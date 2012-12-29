@@ -27,11 +27,11 @@ class puppet::params inherits puppet::default {
   $template_dir            = module_param('template_dir')
   $manifest_dir            = module_param('manifest_dir')
   $manifest_file           = module_param('manifest_file')
-  $module_dirs             = module_param('module_dirs')
+  $module_dirs             = module_array('module_dirs')
 
   $report_dir              = module_param('report_dir')
-  $reports                 = module_param('reports')
-  $report_emails           = module_param('report_emails')
+  $reports                 = module_array('reports')
+  $report_emails           = module_hash('report_emails')
 
   $update_environment      = module_param('update_environment')
   $update_command          = module_param('update_command')
