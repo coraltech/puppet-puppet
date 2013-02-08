@@ -49,8 +49,12 @@ class puppet (
   $report_emails           = $puppet::params::report_emails,
   $update_environment      = $puppet::params::update_environment,
   $update_command          = $puppet::params::update_command,
-  $update_interval         = $puppet::params::update_interval,
-
+  $use_cron                = $puppet::params::use_cron,
+  $cron_hour               = $puppet::params::cron_hour,
+  $cron_minute             = $puppet::params::cron_minute,
+  $cron_month              = $puppet::params::cron_month,
+  $cron_monthday           = $puppet::params::cron_monthday,
+  $cron_weekday            = $puppet::params::cron_weekday
 
 ) inherits puppet::params {
 
@@ -128,16 +132,37 @@ class puppet (
     ensure => $service_ensure,
   }
 
-  if $service_ensure == 'stopped' {
-    cron { 'puppet-cron':
-      ensure => $update_command ? {
-        ''      => 'absent',
-        default => 'present',
-      },
-      environment => $update_environment,
-      command     => $update_command,
-      user        => 'root',
-      minute      => "*/${update_interval}",
-    }
+  if $use_cron == 'true' and $update_command {
+    $cron_ensure = 'present'
+  }
+  else {
+    $cron_ensure = 'absent'
+  }
+
+  cron { 'puppet-cron':
+    ensure      => $cron_ensure,
+    environment => $update_environment,
+    command     => $update_command,
+    user        => 'root',
+    hour        => $cron_hour ? {
+      ''          => undef,
+      default     => $cron_hour
+    },
+    minute      => $cron_minute ? {
+      ''          => undef,
+      default     => $cron_minute
+    },
+    month       => $cron_month ? {
+      ''          => undef,
+      default     => $cron_month
+    },
+    monthday    => $cron_monthday ? {
+      ''          => undef,
+      default     => $cron_monthday
+    },
+    weekday     => $cron_weekday ? {
+      ''          => undef,
+      default     => $cron_weekday
+    },
   }
 }

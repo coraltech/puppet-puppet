@@ -6,5 +6,10 @@
   "puppet_manifest_file" : "site.pp",
   "puppet_reports" : [ "log", "store" ],
   "puppet_report_emails" : {},
-  "puppet_update_interval" : "30"
+  "puppet_use_cron" : "true",
+  "puppet_cron_hour" : "",
+  "puppet_cron_minute" : "*/30",
+  "puppet_cron_month" : "",
+  "puppet_cron_monthday" : "",
+  "puppet_cron_weekday" : ""
 }

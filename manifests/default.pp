@@ -11,7 +11,12 @@ class puppet::default {
 
   $report_emails         = {}
 
-  $update_interval       = 30  # Minutes
+  $use_cron              = 'true'
+  $cron_hour             = ''
+  $cron_minute           = '*/30'
+  $cron_month            = ''
+  $cron_monthday         = ''
+  $cron_weekday          = ''
 
   #---
 

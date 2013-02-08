@@ -33,7 +33,13 @@ class puppet::params inherits puppet::default {
   $reports                 = module_array('reports')
   $report_emails           = module_hash('report_emails')
 
+  $use_cron                = module_param('use_cron')
+  $cron_hour               = module_param('cron_hour')
+  $cron_minute             = module_param('cron_minute')
+  $cron_month              = module_param('cron_month')
+  $cron_monthday           = module_param('cron_monthday')
+  $cron_weekday            = module_param('cron_weekday')
+
   $update_environment      = module_param('update_environment')
   $update_command          = module_param('update_command')
-  $update_interval         = module_param('update_interval')
 }
